@@ -15,3 +15,10 @@ export interface Position extends Size {
     top: number;
     left: number;
 }
+
+export interface PositionOnly {
+    top: number;
+    left: number;
+    right: number;
+    bottom: number;
+}

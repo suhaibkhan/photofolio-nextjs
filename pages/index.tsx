@@ -1,5 +1,5 @@
 import type { NextPageWithLayout } from './_app';
-import { ReactElement, useState } from 'react';
+import { ReactElement, useMemo, useState } from 'react';
 
 import styles from '../styles/Home.module.css';
 import Layout from '../components/layout';
@@ -11,7 +11,7 @@ import ImagePreview from '../components/image-preview';
 type Props = {};
 
 const Home: NextPageWithLayout<Props> = () => {
-  const [previewImage, setPreviewImage] = useState<ImageType | null>(null);
+  const [previewImageIdx, setPreviewImageIdx] = useState<number>(-1);
 
   return (
     <>
@@ -19,13 +19,17 @@ const Home: NextPageWithLayout<Props> = () => {
         <ImageGrid
           images={images}
           imagePath="/api/image-thumb"
-          onClick={setPreviewImage}
+          onClick={setPreviewImageIdx}
         />
       </div>
 
       <ImagePreview
-        image={previewImage}
-        onClose={() => setPreviewImage(null)}
+        image={previewImageIdx >= 0 ? images[previewImageIdx] : null}
+        enableNext={previewImageIdx < images.length - 1}
+        enablePrev={previewImageIdx > 0}
+        onClose={() => setPreviewImageIdx(-1)}
+        onNext={() => setPreviewImageIdx((prevIdx) => prevIdx + 1)}
+        onPrev={() => setPreviewImageIdx((prevIdx) => prevIdx - 1)}
       />
     </>
   );

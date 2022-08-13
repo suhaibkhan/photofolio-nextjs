@@ -17,6 +17,7 @@
   top: 0;
   left: 0;
   user-select: none;
+  transition: opacity 0.8s ease 0s;
 }
 
 .imgPrevImage {
@@ -35,8 +36,31 @@
   height: 100%;
 }
 
-.imgPrevToolbarIcon {
-  cursor: pointer;
+.imgPrevCloseBtns {
+  position: absolute;
+  right: 0px;
+  z-index: 101;
+  user-select: none;
+}
+
+.imgPrevIconBtns {
+  position: absolute;
+  z-index: 101;
+  user-select: none;
+  top: calc((100% - 53px) / 2);
+}
+
+.imgPrevNextIcon {
+  right: 0;
+}
+
+.imgPrevBackIcon {
+  left: 0;
+}
+
+.imgPrevIconDisable {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .imgPrevTitle {

@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import type { FunctionComponent } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import styles from '../styles/image-grid.module.css';
@@ -86,7 +86,7 @@ type Props = {
   imagePath?: string;
   spacing?: number;
   columns?: ColumnConfig;
-  onClick?: (img: ImageType) => void;
+  onClick?: (imgIdx: number, img?: ImageType) => void;
 };
 
 const DEFAULTS = {
@@ -141,8 +141,8 @@ const ImageGrid: FunctionComponent<Props> = ({
     return () => window.removeEventListener('resize', debouncePositionImages);
   }, []);
 
-  const hanldeImageClick = (img: ImageType) => () => {
-    onClick && onClick(img);
+  const hanldeImageClick = (imgIdx: number) => () => {
+    onClick && onClick(imgIdx, images[imgIdx]);
   };
 
   return (
@@ -156,7 +156,7 @@ const ImageGrid: FunctionComponent<Props> = ({
           key={img.name}
           style={gridImagePositions[imgIdx]}
           className={styles.imageItem}
-          onClick={hanldeImageClick(img)}
+          onClick={hanldeImageClick(imgIdx)}
         >
           <Image src={`${imagePath}/${img.name}`} alt={img.title} />
         </div>
@@ -165,4 +165,4 @@ const ImageGrid: FunctionComponent<Props> = ({
   );
 };
 
-export default ImageGrid;
+export default memo(ImageGrid);
