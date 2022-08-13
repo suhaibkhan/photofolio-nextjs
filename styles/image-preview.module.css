@@ -13,11 +13,13 @@
 
 .imgPrevParent {
   position: absolute;
-  z-index: 100;
+  z-index: 99;
   top: 0;
   left: 0;
   user-select: none;
   transition: opacity 0.8s ease 0s;
+  opacity: 0;
+  visibility: hidden;
 }
 
 .imgPrevImage {
@@ -28,7 +30,7 @@
 .imgPrevToolbar {
   position: absolute;
   right: 0px;
-  z-index: 101;
+  z-index: 99;
   /* background: rgba(255, 255, 255, 0.2); */
   display: flex;
   flex-direction: column;
@@ -39,13 +41,13 @@
 .imgPrevCloseBtns {
   position: absolute;
   right: 0px;
-  z-index: 101;
+  z-index: 99;
   user-select: none;
 }
 
 .imgPrevIconBtns {
   position: absolute;
-  z-index: 101;
+  z-index: 99;
   user-select: none;
   top: calc((100% - 53px) / 2);
 }
@@ -68,9 +70,27 @@
   width: calc(100% - 20px);
   left: 0;
   text-align: center;
-  z-index: 101;
+  z-index: 99;
 }
 
 .imgPrevTitleText {
   padding: 10px;
+}
+
+.imgPrevLoadingIcon {
+  animation: rotation 2s infinite linear;
+  top: calc((100% - 50px) / 2);
+  left: calc((100% - 50px) / 2);
+  z-index: 99;
+  position: absolute;
+  opacity: 0.7;
+}
+
+@keyframes rotation {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(359deg);
+  }
 }
