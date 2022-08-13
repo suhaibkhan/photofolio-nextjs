@@ -1,0 +1,52 @@
+.imgPrevContainer {
+  top: 0;
+  left: 0;
+  position: absolute;
+  z-index: 99;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.8s ease 0s;
+}
+
+.imgPrevParent {
+  position: absolute;
+  z-index: 100;
+  top: 0;
+  left: 0;
+  user-select: none;
+}
+
+.imgPrevImage {
+  width: 100%;
+  height: 100%;
+}
+
+.imgPrevToolbar {
+  position: absolute;
+  right: 0px;
+  z-index: 101;
+  /* background: rgba(255, 255, 255, 0.2); */
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  height: 100%;
+}
+
+.imgPrevToolbarIcon {
+  cursor: pointer;
+}
+
+.imgPrevTitle {
+  position: absolute;
+  width: calc(100% - 20px);
+  left: 0;
+  text-align: center;
+  z-index: 101;
+}
+
+.imgPrevTitleText {
+  padding: 10px;
+}
