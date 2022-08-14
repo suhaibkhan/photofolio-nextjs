@@ -24,3 +24,13 @@ a {
 * {
   box-sizing: border-box;
 }
+
+.hidden {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+.visible {
+  visibility: visible !important;
+  opacity: 1 !important;
+}

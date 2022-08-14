@@ -1,17 +1,25 @@
 import type { NextPageWithLayout } from './_app';
-import { ReactElement, useMemo, useState } from 'react';
+import { ReactElement, useCallback, useState } from 'react';
 
 import styles from '../styles/Home.module.css';
 import Layout from '../components/layout';
 import { images } from '../_data/image-data';
 import ImageGrid from '../components/image-grid';
-import { ImageType } from '../components/image.model';
 import ImagePreview from '../components/image-preview';
 
 type Props = {};
 
 const Home: NextPageWithLayout<Props> = () => {
   const [previewImageIdx, setPreviewImageIdx] = useState<number>(-1);
+  const handleOnClose = useCallback(() => setPreviewImageIdx(-1), []);
+  const handleOnNext = useCallback(
+    () => setPreviewImageIdx((prevIdx) => prevIdx + 1),
+    []
+  );
+  const handleOnPrev = useCallback(
+    () => setPreviewImageIdx((prevIdx) => prevIdx - 1),
+    []
+  );
 
   return (
     <>
@@ -27,20 +35,14 @@ const Home: NextPageWithLayout<Props> = () => {
         image={previewImageIdx >= 0 ? images[previewImageIdx] : null}
         enableNext={previewImageIdx < images.length - 1}
         enablePrev={previewImageIdx > 0}
-        onClose={() => setPreviewImageIdx(-1)}
-        onNext={() => setPreviewImageIdx((prevIdx) => prevIdx + 1)}
-        onPrev={() => setPreviewImageIdx((prevIdx) => prevIdx - 1)}
+        onClose={handleOnClose}
+        onNext={handleOnNext}
+        onPrev={handleOnPrev}
       />
     </>
   );
 };
 
 Home.getLayout = (page: ReactElement) => <Layout>{page}</Layout>;
-
-// export const getStaticProps = async () => {
-//   return {
-//     props: { images: [] }
-//   };
-// };
 
 export default Home;

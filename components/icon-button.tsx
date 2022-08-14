@@ -1,11 +1,11 @@
-import type { FunctionComponent } from 'react';
+import { FunctionComponent, memo } from 'react';
 import styles from '../styles/icon-button.module.css';
 import { IconType } from 'react-icons/lib';
 
 type Props = {
   icon: IconType;
   size?: number;
-  onClick?: () => void;
+  onClick?: (() => void) | false;
 };
 
 const IconButton: FunctionComponent<Props> = ({
@@ -14,10 +14,10 @@ const IconButton: FunctionComponent<Props> = ({
   onClick,
 }) => {
   return (
-    <div onClick={onClick} className={styles.iconButton}>
+    <div onClick={onClick || undefined} className={styles.iconButton}>
       <Icon size={size} />
     </div>
   );
 };
 
-export default IconButton;
+export default memo(IconButton);

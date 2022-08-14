@@ -1,12 +1,6 @@
 import { ImageType, Position, Size } from './image.model';
 import styles from '../styles/image-preview.module.css';
-import {
-  FunctionComponent,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { FunctionComponent, useCallback, useRef, useState } from 'react';
 import { useIsomorphicLayoutEffect } from 'usehooks-ts';
 import { innerHeight, innerWidth } from './dom-utils';
 import { useDebouncedCallback } from 'use-debounce';
@@ -14,7 +8,8 @@ import IconButton from './icon-button';
 import { VscChromeClose } from 'react-icons/vsc';
 import { VscChevronRight } from 'react-icons/vsc';
 import { VscChevronLeft } from 'react-icons/vsc';
-import { VscLoading } from 'react-icons/vsc';
+import ImageGallery from './image-gallery';
+import classNames from 'classnames';
 
 const calcImagePosition = (
   image: ImageType,
@@ -52,7 +47,6 @@ const calcImagePosition = (
 
 type Props = {
   image: ImageType | null;
-  imagePath?: string;
   spacing?: number;
   enableNext: boolean;
   enablePrev: boolean;
@@ -62,13 +56,11 @@ type Props = {
 };
 
 const DEFAULTS = {
-  imagePath: '/images/photos',
   spacing: 40,
 };
 
 const ImagePreview: FunctionComponent<Props> = ({
   image,
-  imagePath = DEFAULTS.imagePath,
   spacing = DEFAULTS.spacing,
   enableNext,
   enablePrev,
@@ -79,20 +71,9 @@ const ImagePreview: FunctionComponent<Props> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
 
-  const [imageName, setImageName] = useState<string | null>(null);
-  const [imageStyle, setImageStyle] = useState<React.CSSProperties | null>(
-    null
-  );
+  const [imagePosition, setImagePosition] = useState<Position | null>(null);
   const [titlePosition, setTitlePosition] = useState<Partial<Position> | null>(
     null
-  );
-
-  const containerStyle: React.CSSProperties = useMemo(
-    () => ({
-      opacity: !!image ? 1 : 0,
-      visibility: !!image ? 'visible' : 'hidden',
-    }),
-    [image]
   );
 
   const positionImage = useCallback(() => {
@@ -107,10 +88,7 @@ const ImagePreview: FunctionComponent<Props> = ({
         spacing
       );
 
-      setImageStyle((prevStyle) => ({
-        ...prevStyle,
-        ...imagePos,
-      }));
+      setImagePosition(imagePos);
       setTitlePosition({ top: imagePos.height + imagePos.top });
     }
   }, [image]);
@@ -118,15 +96,7 @@ const ImagePreview: FunctionComponent<Props> = ({
   const debouncePositionImage = useDebouncedCallback(positionImage, 100);
 
   useIsomorphicLayoutEffect(() => {
-    if (!image) {
-      setImageStyle((prevStyle) => ({
-        ...prevStyle,
-        opacity: 0,
-        visibility: 'hidden',
-      }));
-    }
     positionImage();
-    setImageName(image ? image.name : null);
   }, [image]);
 
   useIsomorphicLayoutEffect(() => {
@@ -134,49 +104,16 @@ const ImagePreview: FunctionComponent<Props> = ({
     return () => window.removeEventListener('resize', debouncePositionImage);
   }, []);
 
-  const handleNav = (isNext: boolean) => () => {
-    const nextOp = isNext && enableNext;
-    const prevOp = !isNext && enablePrev;
-
-    if (nextOp || prevOp) {
-      // hide image till new image is loaded
-      setImageName(null);
-      setImageStyle((prevStyles) => ({
-        ...prevStyles,
-        opacity: 0,
-        visibility: 'hidden',
-      }));
-    }
-
-    nextOp && onNext();
-    prevOp && onPrev();
-  };
-
-  const handleImageLoaded = () => {
-    // show loaded image
-    setImageStyle((prevStyles) => ({
-      ...prevStyles,
-      opacity: 1,
-      visibility: 'visible',
-    }));
-  };
-
-  console.log(imageStyle);
-
   return (
     <div
-      className={styles.imgPrevContainer}
-      style={containerStyle}
+      className={classNames(styles.imgPrevContainer, {
+        hidden: !image,
+        visible: !!image,
+      })}
       ref={containerRef}
     >
-      <VscLoading size={40} className={styles.imgPrevLoadingIcon} />
-
-      <div className={styles.imgPrevParent} style={imageStyle || undefined}>
-        <img
-          className={styles.imgPrevImage}
-          src={imageName ? `${imagePath}/${imageName}` : undefined}
-          onLoad={handleImageLoaded}
-        />
+      <div className={styles.imgPrevParent} style={imagePosition || undefined}>
+        <ImageGallery image={image} />
       </div>
       <div
         ref={titleRef}
@@ -191,25 +128,25 @@ const ImagePreview: FunctionComponent<Props> = ({
         <IconButton icon={VscChromeClose} size={32} onClick={onClose} />
       </div>
       <div
-        className={`${styles.imgPrevIconBtns} ${styles.imgPrevNextIcon} ${
-          !enableNext && styles.imgPrevIconDisable
-        }`}
+        className={classNames(styles.imgPrevIconBtns, styles.imgPrevNextIcon, {
+          [styles.imgPrevIconDisable]: !enableNext,
+        })}
       >
         <IconButton
           icon={VscChevronRight}
           size={40}
-          onClick={handleNav(true)}
+          onClick={enableNext && onNext}
         />
       </div>
       <div
-        className={`${styles.imgPrevIconBtns} ${styles.imgPrevBackIcon} ${
-          !enablePrev && styles.imgPrevIconDisable
-        }`}
+        className={classNames(styles.imgPrevIconBtns, styles.imgPrevBackIcon, {
+          [styles.imgPrevIconDisable]: !enablePrev,
+        })}
       >
         <IconButton
           icon={VscChevronLeft}
           size={40}
-          onClick={handleNav(false)}
+          onClick={enablePrev && onPrev}
         />
       </div>
     </div>
