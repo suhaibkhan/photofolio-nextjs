@@ -1,8 +1,9 @@
-import { ImageType, Position, Size } from './image.model';
+import { ImageMetaData, ImageType, Position, Size } from './image.model';
 import styles from '../styles/image-preview.module.css';
 import {
   FunctionComponent,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -23,10 +24,39 @@ import {
   IoGridSharp as Grid,
   IoChevronBackSharp as Prev,
   IoChevronForwardSharp as Next,
+  IoInformationCircleOutline as Info,
 } from 'react-icons/io5';
 
 import ImageGallery from './image-gallery';
 import classNames from 'classnames';
+
+const MONTH_ARR = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+const getDate = (isoDateStr: string) => {
+  const date = new Date(Date.parse(isoDateStr));
+  if (date) {
+    return `${('0' + date.getDate()).slice(-2)} ${
+      MONTH_ARR[date.getMonth()]
+    } ${date.getFullYear()}`;
+  }
+  return '';
+};
+
+const TOOLBAR_HEIGHT = 46;
+const INFOBAR_HEIGHT = 58;
 
 const calcImagePosition = (
   image: ImageType,
@@ -40,7 +70,8 @@ const calcImagePosition = (
 
   const { width, height } = containerSize;
   const contWidth = width - xSpacing * 2;
-  const contHeight = height - ySpacing * 2 - (titleHeight + 50);
+  const contHeight =
+    height - ySpacing * 2 - (titleHeight + TOOLBAR_HEIGHT + INFOBAR_HEIGHT);
 
   const contLandscape = contWidth >= contHeight;
   const aspRatio = image.height / image.width;
@@ -61,7 +92,7 @@ const calcImagePosition = (
   return {
     width: imgWidth,
     height: imgHeight,
-    top: (contHeight - imgHeight) / 2 + ySpacing,
+    top: (contHeight - imgHeight) / 2 + ySpacing + INFOBAR_HEIGHT,
     left: (contWidth - imgWidth) / 2 + xSpacing,
   };
 };
@@ -71,13 +102,14 @@ type Props = {
   spacing?: number | number[];
   curImageIdx: number;
   totalImages: number;
+  showTitle?: boolean;
   onClose: () => void;
   onNext: () => void;
   onPrev: () => void;
 };
 
 const DEFAULTS = {
-  spacing: [20, 40],
+  spacing: 10,
 };
 
 const ImagePreview: FunctionComponent<Props> = ({
@@ -85,6 +117,7 @@ const ImagePreview: FunctionComponent<Props> = ({
   spacing = DEFAULTS.spacing,
   curImageIdx,
   totalImages,
+  showTitle = false,
   onClose,
   onNext,
   onPrev,
@@ -93,7 +126,7 @@ const ImagePreview: FunctionComponent<Props> = ({
   const titleRef = useRef<HTMLDivElement>(null);
 
   const [containerSize, setContainerSize] = useState<Size | null>(null);
-  const [fullScreen, setFullScreen] = useState<boolean>(false);
+  const [imageData, setImageData] = useState<ImageMetaData | null>(null);
 
   const enableNext = useMemo(
     () => curImageIdx >= 0 && curImageIdx < totalImages - 1,
@@ -120,7 +153,7 @@ const ImagePreview: FunctionComponent<Props> = ({
   );
 
   const handleResize = useCallback(() => {
-    if (containerRef.current && titleRef.current) {
+    if (containerRef.current) {
       const contWidth = innerWidth(containerRef.current);
       const contHeight = innerHeight(containerRef.current);
       setContainerSize({
@@ -132,8 +165,22 @@ const ImagePreview: FunctionComponent<Props> = ({
 
   useIsomorphicLayoutEffect(() => {
     window.addEventListener('resize', handleResize, true);
+    // setShowInfo(false);
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
+  }, [image]);
+
+  useEffect(() => {
+    if (image) {
+      fetch(`/api/image-metadata?name=${image.name}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setImageData({
+            ...data,
+            dateTime: getDate(data.dateTime),
+          });
+        });
+    }
   }, [image]);
 
   return (
@@ -144,6 +191,30 @@ const ImagePreview: FunctionComponent<Props> = ({
       <div className={styles.imgPrevParent} style={imagePosition || undefined}>
         <ImageGallery image={image} />
       </div>
+
+      {imageData && imagePosition && (
+        <div
+          className={styles.imgPrevInfoBar}
+          style={{
+            left: imagePosition.left,
+            width: imagePosition.width,
+            top: imagePosition.top - INFOBAR_HEIGHT,
+          }}
+        >
+          <div className={styles.imgPrevInfoDate} />
+          <div className={styles.imgPrevInfoCamData}>
+            {imageData.cameraModel && <div>{imageData.cameraModel}</div>}
+            {imageData.lensModel && <div>{imageData.lensModel}</div>}
+            <div>
+              <span>{`ISO ${imageData.iso}`}</span>
+              <span>{`${imageData.focalLength}mm`}</span>
+              <span>{`${imageData.fNumber}`}</span>
+              <span>{`${imageData.shutterSpeed}s`}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div
         ref={titleRef}
         className={styles.imgPrevTitle}
@@ -153,48 +224,15 @@ const ImagePreview: FunctionComponent<Props> = ({
           <div className={styles.imgPrevTitleText}>{image.title}</div>
         )}
       </div>
-      <div
-        className={classNames(styles.imgPrevIconBtns, styles.imgPrevCloseBtns)}
-      >
-        <IconButton icon={Close} size={30} onClick={onClose} />
-      </div>
 
-      <div
-        className={classNames(styles.imgPrevIconBtns, styles.imgPrevMaxBtns)}
-      >
-        <IconButton
-          icon={fullScreen ? FullScreenExit : FullScreen}
-          size={24}
-          onClick={() => setFullScreen((prevState) => !prevState)}
-        />
-      </div>
-
-      <div
-        className={classNames(
-          styles.imgPrevIconBtns,
-          styles.imgPrevNavBtns,
-          styles.imgPrevNextIcon,
-          {
-            [styles.imgPrevIconDisable]: !enableNext,
-          }
-        )}
-      >
-        <IconButton icon={Next} size={34} onClick={enableNext && onNext} />
-      </div>
-      <div
-        className={classNames(
-          styles.imgPrevIconBtns,
-          styles.imgPrevNavBtns,
-          styles.imgPrevBackIcon,
-          {
-            [styles.imgPrevIconDisable]: !enablePrev,
-          }
-        )}
-      >
-        <IconButton icon={Prev} size={34} onClick={enablePrev && onPrev} />
-      </div>
       <div className={styles.imgPrevToolbar}>
         <IconButton icon={Grid} size={18} onClick={onClose} label="Gallery" />
+        <IconButton
+          icon={FullScreen}
+          size={18}
+          onClick={onClose}
+          label="Maximize"
+        />
         <IconButton
           icon={Prev}
           size={18}

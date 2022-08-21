@@ -4,6 +4,7 @@ export interface ImageType {
     height: number;
     width: number;
     title?: string;
+    description?: string;
 }
 
 export interface Size {
@@ -22,3 +23,15 @@ export interface PositionOnly {
     right: number;
     bottom: number;
 }
+
+export type ImageMetaData = {
+    fNumber: string;
+    focalLength: string;
+    iso: string;
+    shutterSpeed: string;
+    dateTime: string;
+    lensModel: string;
+    cameraModel: string;
+    description?: string;
+    title?: string;
+};

@@ -32,7 +32,7 @@ const IconButton: FunctionComponent<Props> = ({
       style={{ height: size + ICON_PADDING * 2 }}
     >
       <Icon size={size} />
-      {label && <span className={styles.iconLabel}>{label}</span>}
+      {!label && <span className={styles.iconLabel}>{label}</span>}
     </div>
   );
 };
