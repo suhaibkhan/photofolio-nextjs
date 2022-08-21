@@ -67,6 +67,8 @@
   padding-top: 20px;
   /* line-height: 1.3em; */
   font-size: 0.9rem;
+  font-weight: 400;
+  font-style: italic;
 }
 
 .imgPrevInfoBar {
