@@ -70,7 +70,11 @@ const SideNav: FunctionComponent<Props> = ({}) => {
             ))}
           </ul>
           <div className={styles.sideNavSocialIcons}>
-            <a href="https://www.instagram.com/suhaib_s_khan/" target="_blank">
+            <a
+              href="https://www.instagram.com/suhaib_s_khan/"
+              target="_blank"
+              rel="noreferrer"
+            >
               <AiOutlineInstagram size={36} />
             </a>
             <a href="#">
