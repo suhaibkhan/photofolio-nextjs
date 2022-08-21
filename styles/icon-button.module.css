@@ -1,5 +1,21 @@
 .iconButton {
   cursor: pointer;
-  display: inline-block;
+  display: inline-flex;
   padding: 4px;
+  align-items: center;
+}
+
+.textFirstIcon {
+  flex-direction: row-reverse;
+}
+
+.disabledIcon {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+
+.iconLabel {
+  display: inline-block;
+  padding: 2px 4px;
 }

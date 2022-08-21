@@ -1,13 +1,30 @@
 import { ImageType, Position, Size } from './image.model';
 import styles from '../styles/image-preview.module.css';
-import { FunctionComponent, useCallback, useRef, useState } from 'react';
+import {
+  FunctionComponent,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useIsomorphicLayoutEffect } from 'usehooks-ts';
 import { innerHeight, innerWidth } from './dom-utils';
-import { useDebouncedCallback } from 'use-debounce';
 import IconButton from './icon-button';
-import { VscChromeClose } from 'react-icons/vsc';
-import { VscChevronRight } from 'react-icons/vsc';
-import { VscChevronLeft } from 'react-icons/vsc';
+import {
+  VscChromeClose as Close,
+  // VscChevronRight as Next,
+  // VscChevronLeft as Prev,
+} from 'react-icons/vsc';
+import {
+  AiOutlineExpand as FullScreen,
+  AiOutlineShrink as FullScreenExit,
+} from 'react-icons/ai';
+import {
+  IoGridSharp as Grid,
+  IoChevronBackSharp as Prev,
+  IoChevronForwardSharp as Next,
+} from 'react-icons/io5';
+
 import ImageGallery from './image-gallery';
 import classNames from 'classnames';
 
@@ -15,11 +32,15 @@ const calcImagePosition = (
   image: ImageType,
   containerSize: Size,
   titleHeight: number,
-  spacing: number
+  spacing: number | number[]
 ): Position => {
+  const [ySpacing, xSpacing] = Array.isArray(spacing)
+    ? spacing
+    : [spacing, spacing];
+
   const { width, height } = containerSize;
-  const contWidth = width - spacing * 2;
-  const contHeight = height - spacing * 2 - titleHeight;
+  const contWidth = width - xSpacing * 2;
+  const contHeight = height - ySpacing * 2 - (titleHeight + 50);
 
   const contLandscape = contWidth >= contHeight;
   const aspRatio = image.height / image.width;
@@ -40,30 +61,30 @@ const calcImagePosition = (
   return {
     width: imgWidth,
     height: imgHeight,
-    top: (contHeight - imgHeight) / 2 + spacing,
-    left: (contWidth - imgWidth) / 2 + spacing,
+    top: (contHeight - imgHeight) / 2 + ySpacing,
+    left: (contWidth - imgWidth) / 2 + xSpacing,
   };
 };
 
 type Props = {
   image: ImageType | null;
-  spacing?: number;
-  enableNext: boolean;
-  enablePrev: boolean;
+  spacing?: number | number[];
+  curImageIdx: number;
+  totalImages: number;
   onClose: () => void;
   onNext: () => void;
   onPrev: () => void;
 };
 
 const DEFAULTS = {
-  spacing: 40,
+  spacing: [20, 40],
 };
 
 const ImagePreview: FunctionComponent<Props> = ({
   image,
   spacing = DEFAULTS.spacing,
-  enableNext,
-  enablePrev,
+  curImageIdx,
+  totalImages,
   onClose,
   onNext,
   onPrev,
@@ -71,45 +92,53 @@ const ImagePreview: FunctionComponent<Props> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
 
-  const [imagePosition, setImagePosition] = useState<Position | null>(null);
-  const [titlePosition, setTitlePosition] = useState<Partial<Position> | null>(
-    null
-  );
+  const [containerSize, setContainerSize] = useState<Size | null>(null);
+  const [fullScreen, setFullScreen] = useState<boolean>(false);
 
-  const positionImage = useCallback(() => {
-    if (containerRef.current && image) {
-      const titleHeight = titleRef.current ? titleRef.current.clientHeight : 0;
-      const contWidth = innerWidth(containerRef.current);
-      const contHeight = innerHeight(containerRef.current);
-      const imagePos = calcImagePosition(
+  const enableNext = useMemo(
+    () => curImageIdx >= 0 && curImageIdx < totalImages - 1,
+    [curImageIdx, totalImages]
+  );
+  const enablePrev = useMemo(() => curImageIdx > 0, [curImageIdx]);
+
+  const imagePosition = useMemo(() => {
+    if (image && containerSize) {
+      return calcImagePosition(
         image,
-        { width: contWidth, height: contHeight },
-        titleHeight,
+        containerSize,
+        titleRef.current?.clientHeight || 0,
         spacing
       );
-
-      setImagePosition(imagePos);
-      setTitlePosition({ top: imagePos.height + imagePos.top });
     }
-  }, [image]);
+    return null;
+  }, [containerSize, image, spacing, titleRef.current]);
 
-  const debouncePositionImage = useDebouncedCallback(positionImage, 100);
+  const titlePosition = useMemo(
+    () =>
+      imagePosition ? { top: imagePosition.height + imagePosition.top } : null,
+    [imagePosition]
+  );
 
-  useIsomorphicLayoutEffect(() => {
-    positionImage();
-  }, [image]);
-
-  useIsomorphicLayoutEffect(() => {
-    window.addEventListener('resize', debouncePositionImage, true);
-    return () => window.removeEventListener('resize', debouncePositionImage);
+  const handleResize = useCallback(() => {
+    if (containerRef.current && titleRef.current) {
+      const contWidth = innerWidth(containerRef.current);
+      const contHeight = innerHeight(containerRef.current);
+      setContainerSize({
+        width: contWidth,
+        height: contHeight,
+      });
+    }
   }, []);
+
+  useIsomorphicLayoutEffect(() => {
+    window.addEventListener('resize', handleResize, true);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, [image]);
 
   return (
     <div
-      className={classNames(styles.imgPrevContainer, {
-        hidden: !image,
-        visible: !!image,
-      })}
+      className={classNames(styles.imgPrevContainer, 'visible')}
       ref={containerRef}
     >
       <div className={styles.imgPrevParent} style={imagePosition || undefined}>
@@ -124,29 +153,65 @@ const ImagePreview: FunctionComponent<Props> = ({
           <div className={styles.imgPrevTitleText}>{image.title}</div>
         )}
       </div>
-      <div className={styles.imgPrevCloseBtns}>
-        <IconButton icon={VscChromeClose} size={32} onClick={onClose} />
-      </div>
       <div
-        className={classNames(styles.imgPrevIconBtns, styles.imgPrevNextIcon, {
-          [styles.imgPrevIconDisable]: !enableNext,
-        })}
+        className={classNames(styles.imgPrevIconBtns, styles.imgPrevCloseBtns)}
+      >
+        <IconButton icon={Close} size={30} onClick={onClose} />
+      </div>
+
+      <div
+        className={classNames(styles.imgPrevIconBtns, styles.imgPrevMaxBtns)}
       >
         <IconButton
-          icon={VscChevronRight}
-          size={40}
-          onClick={enableNext && onNext}
+          icon={fullScreen ? FullScreenExit : FullScreen}
+          size={24}
+          onClick={() => setFullScreen((prevState) => !prevState)}
         />
       </div>
+
       <div
-        className={classNames(styles.imgPrevIconBtns, styles.imgPrevBackIcon, {
-          [styles.imgPrevIconDisable]: !enablePrev,
-        })}
+        className={classNames(
+          styles.imgPrevIconBtns,
+          styles.imgPrevNavBtns,
+          styles.imgPrevNextIcon,
+          {
+            [styles.imgPrevIconDisable]: !enableNext,
+          }
+        )}
       >
+        <IconButton icon={Next} size={34} onClick={enableNext && onNext} />
+      </div>
+      <div
+        className={classNames(
+          styles.imgPrevIconBtns,
+          styles.imgPrevNavBtns,
+          styles.imgPrevBackIcon,
+          {
+            [styles.imgPrevIconDisable]: !enablePrev,
+          }
+        )}
+      >
+        <IconButton icon={Prev} size={34} onClick={enablePrev && onPrev} />
+      </div>
+      <div className={styles.imgPrevToolbar}>
+        <IconButton icon={Grid} size={18} onClick={onClose} label="Gallery" />
         <IconButton
-          icon={VscChevronLeft}
-          size={40}
+          icon={Prev}
+          size={18}
           onClick={enablePrev && onPrev}
+          label="Prev"
+          disable={!enablePrev}
+        />
+        <span className={styles.imgPrevNavStatus}>{`${
+          curImageIdx + 1
+        } / ${totalImages}`}</span>
+        <IconButton
+          icon={Next}
+          size={18}
+          onClick={enableNext && onNext}
+          label="Next"
+          textFirst
+          disable={!enableNext}
         />
       </div>
     </div>

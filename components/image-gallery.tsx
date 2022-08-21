@@ -51,6 +51,13 @@ const ImageGallery: FunctionComponent<Props> = ({
     }));
   };
 
+  const handleImageError = () => {
+    setImageState((prevState) => ({
+      ...prevState,
+      loading: false,
+    }));
+  };
+
   return (
     <>
       {imageState.loading && (
@@ -67,6 +74,7 @@ const ImageGallery: FunctionComponent<Props> = ({
             : undefined
         }
         onLoad={handleImageLoaded(true)}
+        onError={handleImageError}
       />
       <img
         className={classNames(styles.galMainImage, {
@@ -79,6 +87,7 @@ const ImageGallery: FunctionComponent<Props> = ({
             : undefined
         }
         onLoad={handleImageLoaded(false)}
+        onError={handleImageError}
       />
     </>
   );

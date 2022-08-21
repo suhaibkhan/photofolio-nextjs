@@ -34,3 +34,11 @@ a {
   visibility: visible !important;
   opacity: 1 !important;
 }
+
+.show {
+  display: block !important;
+}
+
+.hide {
+  display: none !important;
+}

@@ -1,6 +1,5 @@
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import type { FunctionComponent } from 'react';
-import { useDebouncedCallback } from 'use-debounce';
 import styles from '../styles/image-grid.module.css';
 import Image from './image';
 import { ImageType, Position, Size } from './image.model';
@@ -91,7 +90,7 @@ type Props = {
 
 const DEFAULTS = {
   imagePath: '/images/photos',
-  spacing: 10,
+  spacing: 2,
   columns: [
     { maxWidth: 800, count: 2 },
     { maxWidth: 1400, count: 3 },
@@ -114,31 +113,36 @@ const ImageGrid: FunctionComponent<Props> = ({
         : columns,
     [columns]
   );
-  const [gridImagePositions, setGridImagePositions] = useState<Position[]>([]);
-  const [gridContainerSize, setGridContainerSize] = useState<Size>();
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
 
-  const positionImages = useCallback(() => {
+  const {
+    imagePositions: gridImagePositions,
+    containerSize: gridContainerSize,
+  } = useMemo(
+    () =>
+      containerWidth
+        ? calcGridImagePositions(
+            images,
+            containerWidth,
+            spacing,
+            getColumns(columnConfig)
+          )
+        : { imagePositions: [], containerSize: undefined },
+    [containerWidth, columnConfig, spacing, images]
+  );
+
+  const handleResize = useCallback(() => {
     if (containerRef.current && containerRef.current.parentElement) {
       const containerWidth = innerWidth(containerRef.current.parentElement);
-
-      const { imagePositions, containerSize } = calcGridImagePositions(
-        images,
-        containerWidth,
-        spacing,
-        getColumns(columnConfig)
-      );
-      setGridImagePositions(imagePositions);
-      setGridContainerSize(containerSize);
+      setContainerWidth(containerWidth);
     }
   }, []);
 
-  const debouncePositionImages = useDebouncedCallback(positionImages, 100);
-
   useIsomorphicLayoutEffect(() => {
-    window.addEventListener('resize', debouncePositionImages, true);
-    positionImages();
+    window.addEventListener('resize', handleResize, true);
+    handleResize();
 
-    return () => window.removeEventListener('resize', debouncePositionImages);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const hanldeImageClick = (imgIdx: number) => () => {
